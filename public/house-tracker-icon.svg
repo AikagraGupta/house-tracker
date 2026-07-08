@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="House tracker icon">
+  <rect width="64" height="64" rx="14" fill="#0f766e"/>
+  <path d="M16 31.5 32 18l16 13.5v17a3 3 0 0 1-3 3h-8.5V39h-9v12.5H19a3 3 0 0 1-3-3z" fill="#f8fafc"/>
+  <path d="M22 29.5 32 21l10 8.5" fill="none" stroke="#134e4a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M43 17v7.5" fill="none" stroke="#f8fafc" stroke-width="4" stroke-linecap="round"/>
+</svg>

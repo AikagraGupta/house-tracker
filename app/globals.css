@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --background: #f6f8fb;
+  --foreground: #172033;
+  --muted: #5e6a7f;
+  --surface: #ffffff;
+  --line: #d9e0ea;
+  --sea: #087f7a;
+  --coral: #d95d55;
+  --grape: #6b5dd3;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(246, 248, 251, 0.96) 22%, #eef3f7 100%);
+  color: var(--foreground);
+  font-family: var(--font-body), Inter, ui-sans-serif, system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid rgba(8, 127, 122, 0.55);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: rgba(8, 127, 122, 0.18);
+  color: var(--foreground);
+}
+
+@layer components {
+  .tool-panel {
+    @apply rounded-lg border border-line bg-white shadow-sm;
+  }
+
+  .control-label {
+    @apply text-xs font-semibold uppercase text-slate-500;
+  }
+
+  .metric-label {
+    @apply text-xs font-medium text-slate-500;
+  }
+
+  .metric-value {
+    @apply text-base font-semibold text-ink;
+  }
+
+  .focus-ring {
+    @apply transition-colors duration-150;
+  }
+}
