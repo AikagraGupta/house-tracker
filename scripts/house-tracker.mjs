@@ -53,6 +53,54 @@ const DISTRICTS = [
   }
 ];
 
+const FOCUS_AREAS = [
+  {
+    id: "kennedy-town",
+    label: "Kennedy Town",
+    query: "Kennedy Town Hong Kong rental"
+  },
+  {
+    id: "sai-ying-pun",
+    label: "Sai Ying Pun",
+    query: "Sai Ying Pun Hong Kong rental"
+  },
+  {
+    id: "shek-tong-tsui",
+    label: "Shek Tong Tsui",
+    query: "Shek Tong Tsui Hong Kong rental"
+  }
+];
+
+const TRACKED_SOURCES = [
+  {
+    id: "28hse",
+    name: "28HSE",
+    url: "https://www.28hse.com/en/rent",
+    robotsTxt: "https://www.28hse.com/robots.txt",
+    mode: "Parsed listings",
+    status: "parsed",
+    note: "Public rental result pages allow crawling and expose rent, saleable area, and listing metadata."
+  },
+  {
+    id: "carousell",
+    name: "Carousell",
+    url: "https://www.carousell.com.hk/search/property",
+    robotsTxt: "https://www.carousell.com.hk/robots.txt",
+    mode: "Tracked search links",
+    status: "manual",
+    note: "Carousell disallows automated /search/ crawling and returned 403 to the tracker, so it is tracked as search coverage links."
+  },
+  {
+    id: "airbnb",
+    name: "Airbnb",
+    url: "https://www.airbnb.com/s/Hong-Kong/homes",
+    robotsTxt: "https://www.airbnb.com/robots.txt",
+    mode: "Tracked search links",
+    status: "manual",
+    note: "Airbnb search result pages with structured stay data are disallowed for general crawlers, so it is tracked as search coverage links."
+  }
+];
+
 const REQUEST_HEADERS = {
   "User-Agent":
     "Mozilla/5.0 (compatible; HKHouseTracker/0.2; personal rental tracker)",
@@ -203,6 +251,58 @@ function buildReferenceLinks(listing) {
   }));
 }
 
+function sourceSearchUrl(sourceId, area) {
+  if (sourceId === "carousell") {
+    return `https://www.carousell.com.hk/search/property?search=${encodeURIComponent(area.query)}`;
+  }
+
+  if (sourceId === "airbnb") {
+    return `https://www.airbnb.com/s/${area.label.replace(/\s+/g, "-")}--Hong-Kong/homes`;
+  }
+
+  return "https://www.28hse.com/en/rent";
+}
+
+function buildSourceSummaries({ districtTotals, errors, listings, pagesFetched, expectedResults }) {
+  const parsedCount = listings.length;
+
+  return TRACKED_SOURCES.map((source) => {
+    if (source.id === "28hse") {
+      return {
+        ...source,
+        listingsParsed: parsedCount,
+        pagesFetched,
+        reportedResults: expectedResults,
+        errors: errors.filter((error) => !error.sourceId || error.sourceId === source.id).length,
+        areas: districtTotals.map((district) => ({
+          id: district.id,
+          label: district.label,
+          url: district.url,
+          listingsParsed: district.listingsParsed,
+          pagesFetched: district.pagesFetched,
+          reportedResults: district.reportedResults
+        }))
+      };
+    }
+
+    return {
+      ...source,
+      listingsParsed: 0,
+      pagesFetched: 0,
+      reportedResults: 0,
+      errors: 0,
+      areas: FOCUS_AREAS.map((area) => ({
+        id: area.id,
+        label: area.label,
+        url: sourceSearchUrl(source.id, area),
+        listingsParsed: 0,
+        pagesFetched: 0,
+        reportedResults: 0
+      }))
+    };
+  });
+}
+
 function parseListing(block, source) {
   const detailUrl = matchFirst(block, /<a class="detail_page" href="([^"]+)"/i);
   const id = matchFirst(detailUrl, /property-(\d+)/i) || matchFirst(block, /attr1='(\d+)'/i);
@@ -248,7 +348,10 @@ function parseListing(block, source) {
   const sqftPerHkd1000 = saleableArea / (rent / 1000);
 
   return {
-    id,
+    id: `28hse:${id}`,
+    sourceId: "28hse",
+    sourceName: "28HSE",
+    externalId: id,
     title: title || "Untitled listing",
     url: detailUrl,
     imageUrl,
@@ -352,7 +455,7 @@ async function scan() {
 
         for (const listing of listings) {
           if (!seen.has(listing.id)) {
-            const previous = previousListings.get(listing.id);
+            const previous = previousListings.get(listing.id) ?? previousListings.get(listing.externalId);
             seen.set(listing.id, {
               ...listing,
               references: buildReferenceLinks(listing),
@@ -379,7 +482,7 @@ async function scan() {
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        errors.push({ district: district.id, page, url, message });
+        errors.push({ sourceId: "28hse", district: district.id, page, url, message });
         process.stdout.write(`failed: ${message}\n`);
       }
 
@@ -409,6 +512,7 @@ async function scan() {
       url: "https://www.28hse.com/en/rent",
       robotsTxt: "https://www.28hse.com/robots.txt"
     },
+    sources: buildSourceSummaries({ districtTotals, errors, listings, pagesFetched, expectedResults }),
     referenceSources: REFERENCE_SITES.map(({ name, url, robotsTxt }) => ({
       name,
       url,
@@ -440,7 +544,8 @@ async function scan() {
       districts: DISTRICTS.length,
       expectedResults,
       pagesFetched,
-      errors: errors.length
+      errors: errors.length,
+      sources: TRACKED_SOURCES.length
     },
     districtTotals,
     errors,

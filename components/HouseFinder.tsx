@@ -152,6 +152,7 @@ export function HouseFinder() {
   }, [mode, sortMode, query, maxRent, minArea, maxPpsf, hideFlagged, newOnly]);
 
   const listings = useMemo(() => snapshot?.listings ?? [], [snapshot]);
+  const sources = useMemo(() => snapshot?.sources ?? [], [snapshot]);
 
   const summary = useMemo(() => {
     const focusListings = listings.filter(isFocusArea);
@@ -324,11 +325,12 @@ export function HouseFinder() {
                   HK House Tracker
                 </div>
                 <h1 className="mt-2 font-display text-3xl font-semibold text-ink sm:text-4xl">
-                  Ktown and SYP rental finder
+                  Multi-source HK rental finder
                 </h1>
                 <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
                   <span>{formatNumber(summary.focusCount)} Ktown/SYP listings</span>
                   <span>{formatNumber(summary.likelyWholeCount)} likely whole units</span>
+                  <span>{formatNumber(sources.length || 1)} tracked sources</span>
                   <span>Updated {formatDateTime(snapshot.scannedAt)}</span>
                 </div>
               </div>
@@ -342,15 +344,20 @@ export function HouseFinder() {
                   <Link2 className="h-4 w-4" />
                   {copied ? "Copied" : "Share"}
                 </button>
-                <a
-                  href={snapshot.source.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex h-10 items-center gap-2 rounded-md bg-ink px-3 text-sm font-semibold text-white hover:bg-sea"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  28HSE
-                </a>
+                {(sources.length ? sources : [{ id: "28hse", name: snapshot.source.name, url: snapshot.source.url }]).map(
+                  (source) => (
+                    <a
+                      key={source.id}
+                      href={source.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-10 items-center gap-2 rounded-md bg-ink px-3 text-sm font-semibold text-white hover:bg-sea"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      {source.name}
+                    </a>
+                  )
+                )}
               </div>
             </div>
           </div>
@@ -595,6 +602,61 @@ export function HouseFinder() {
 
           <aside className="grid h-fit gap-4 xl:sticky xl:top-4">
             <section className="tool-panel p-4">
+              <div className="control-label">Tracked sources</div>
+              <div className="mt-3 grid gap-3">
+                {(sources.length
+                  ? sources
+                  : [
+                      {
+                        id: "28hse",
+                        name: snapshot.source.name,
+                        mode: "Parsed listings",
+                        status: "parsed" as const,
+                        note: "Primary parsed source.",
+                        listingsParsed: listings.length,
+                        areas: snapshot.districtTotals.map((district) => ({
+                          id: district.id,
+                          label: district.label,
+                          url: snapshot.source.url
+                        }))
+                      }
+                    ]
+                ).map((source) => (
+                  <div key={source.id} className="rounded-md border border-line bg-slate-50 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-ink">{source.name}</div>
+                        <div className="mt-1 text-xs font-medium text-slate-500">{source.mode}</div>
+                      </div>
+                      <span
+                        className={cn(
+                          "rounded-md px-2 py-1 text-xs font-semibold",
+                          source.status === "parsed" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                        )}
+                      >
+                        {source.status === "parsed" ? `${formatNumber(source.listingsParsed)} parsed` : "Links"}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-slate-600">{source.note}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {source.areas.slice(0, 6).map((area) => (
+                        <a
+                          key={area.id}
+                          href={area.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex h-8 items-center rounded-md border border-line bg-white px-2 text-xs font-semibold text-slate-600 hover:border-sea hover:text-sea"
+                        >
+                          {area.label}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="tool-panel p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="control-label">Shortlist</div>
@@ -682,6 +744,9 @@ function ListingCard({
                 <span className="inline-flex items-center gap-1 rounded-md bg-teal-50 px-2 py-1 text-xs font-semibold text-sea">
                   <MapPin className="h-3.5 w-3.5" />
                   {getDistrictLabel(listing)}
+                </span>
+                <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
+                  {listing.sourceName || "28HSE"}
                 </span>
                 {isFocusArea(listing) ? (
                   <span className="rounded-md bg-indigo-50 px-2 py-1 text-xs font-semibold text-grape">

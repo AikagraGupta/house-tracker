@@ -1,5 +1,8 @@
 export type HouseListing = {
   id: string;
+  sourceId?: string;
+  sourceName?: string;
+  externalId?: string;
   rank: number;
   title: string;
   url: string;
@@ -35,6 +38,27 @@ export type HouseTrackerSnapshot = {
     url: string;
     robotsTxt: string;
   };
+  sources?: Array<{
+    id: string;
+    name: string;
+    url: string;
+    robotsTxt: string;
+    mode: string;
+    status: "parsed" | "manual";
+    note: string;
+    listingsParsed: number;
+    pagesFetched: number;
+    reportedResults: number;
+    errors: number;
+    areas: Array<{
+      id: string;
+      label: string;
+      url: string;
+      listingsParsed: number;
+      pagesFetched: number;
+      reportedResults: number;
+    }>;
+  }>;
   referenceSources: Array<{
     name: string;
     url: string;
@@ -65,6 +89,7 @@ export type HouseTrackerSnapshot = {
     expectedResults: number;
     pagesFetched: number;
     errors: number;
+    sources?: number;
   };
   districtTotals: Array<{
     id: string;
@@ -74,6 +99,7 @@ export type HouseTrackerSnapshot = {
     listingsParsed: number;
   }>;
   errors: Array<{
+    sourceId?: string;
     district: string;
     page: number;
     url: string;

@@ -11,6 +11,7 @@ Live app: https://house-tracker-omega.vercel.app
 - Lets friends search, filter by budget, filter by size, sort, save, and compare listings
 - Keeps room-share, dorm, subdivided, and short-term-looking listings visible but clearly marked
 - Serves the latest snapshot from `public/data/house-tracker/latest.json` for Vercel
+- Tracks 28HSE, Carousell, and Airbnb coverage in the hosted snapshot
 - Refreshes listing data online every 3 hours through GitHub Actions
 
 ## Local Development
@@ -29,6 +30,14 @@ npm run house:scan
 ```
 
 This runs the scanner and syncs `data/house-tracker/latest.json` into `public/data/house-tracker/latest.json` so the UI and deployment use the same snapshot.
+
+## Sources
+
+- 28HSE: parsed into sortable listing cards because its public rental result pages allow access and include rent, saleable area, and listing metadata.
+- Carousell: tracked as per-area search links because its robots rules disallow automated `/search/` crawling and the tracker receives a 403 from public search pages.
+- Airbnb: tracked as per-area search links because the structured search-result pages are disallowed for general crawlers.
+
+The UI shows all tracked sources, while parsed listing rankings currently come from 28HSE.
 
 ## Hosted Refresh
 
